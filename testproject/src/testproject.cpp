@@ -3,13 +3,26 @@
  * @date 19-Nov-2019
  */
 
+#include "Object.h"
+
 #include "orx.h"
 
 orxOBJECT *hero;
 orxOBJECT *gun;
 
-void destroyStar (orxOBJECT *star) {
-    orxObject_SetLifeTime(star, 0);
+void destroyObj (orxOBJECT *obj) {
+    orxObject_SetLifeTime(obj, 0);
+}
+
+void explodeObject (orxOBJECT *obj, orxSTRING objName) {
+    if (obj == orxNULL) return;
+
+    orxVECTOR objVector;
+    orxObject_GetWorldPosition(obj, &objVector);
+    objVector.fZ = 0.0;
+
+    orxOBJECT *explosion = orxObject_CreateFromConfig(objName);
+    orxObject_SetPosition(explosion, &objVector);
 }
 
 orxSTATUS orxFASTCALL PhysicsEventHandler (const orxEVENT *e) {
@@ -22,11 +35,14 @@ orxSTATUS orxFASTCALL PhysicsEventHandler (const orxEVENT *e) {
         orxSTRING fromObjectName = (orxSTRING) orxObject_GetName(fromObject);
         orxSTRING toObjectName = (orxSTRING) orxObject_GetName(toObject);
 
-        if (orxString_Compare(fromObjectName, "StarObject") == 0) {
-            destroyStar(fromObject);
+        if (orxString_Compare(fromObjectName, "StarObject") == 0 || orxString_Compare(toObjectName, "StarObject") == 0) {
+            destroyObj(toObject);
         }
-        if (orxString_Compare(toObjectName, "StarObject") == 0) {
-            destroyStar(toObject);
+
+        if (orxString_Compare(fromObjectName, "BulletObject") == 0 || orxString_Compare(toObjectName, "BulletObject") == 0) {
+            explodeObject(toObject, "JellyExploder");
+            destroyObj(toObject);
+            destroyObj(fromObject);
         }
     }
     return orxSTATUS_SUCCESS;
